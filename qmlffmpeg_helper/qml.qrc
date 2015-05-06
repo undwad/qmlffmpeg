@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>../qmlffmpeg.qml</file>
+    </qresource>
+</RCC>
