@@ -105,6 +105,8 @@ public slots:
     void playing(const QString& source)
     {
         reset(source.toStdString().c_str());
+        _videoTimeStamp = _audioTimeStamp = 0;
+        _audioInterval = 23;
         _timer.start();
     }
 
@@ -112,6 +114,7 @@ public slots:
     {
         receive();
 
+        if(!_audioTimeStamp) _elapsed.restart();
         if(_elapsed.elapsed() >= _audioTimeStamp)
             if(hasAudio())
             {
@@ -119,7 +122,6 @@ public slots:
                 if (timestamp >= 0)
                 {
                     _audioTimeStamp = timestamp;
-                    if(!timestamp) _elapsed.restart();
                     _audioInput->write(_sound.data(), _sound.size());
                 }
             }

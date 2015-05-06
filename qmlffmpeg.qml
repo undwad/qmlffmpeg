@@ -15,13 +15,30 @@ ApplicationWindow
     FFMPEGPlayer
     {
         id: _ffmpeg
-        source: "f:/umayc/misc/testff/output/TAN BIONICA - Ella.mp4"
+        //source: "f:/umayc/misc/testff/output/TAN BIONICA - Ella.mp4"
+        source: "f:/!!!/Свадьба в малиновке. Чует мое сердце, что мы накануне грандиозного шухера.mp4"
+        //source: "f:/!!!/Шаолинь.avi"
     }
 
     VideoOutput
     {
         source: _ffmpeg
         anchors.fill: parent
+    }
+
+    Column
+    {
+        anchors.right: parent.right
+        Button
+        {
+            text: "play"
+            onClicked: _ffmpeg.play()
+        }
+        Button
+        {
+            text: "stop"
+            onClicked: _ffmpeg.stop()
+        }
     }
 
     Component.onCompleted: _ffmpeg.play()
