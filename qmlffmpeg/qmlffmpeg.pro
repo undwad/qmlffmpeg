@@ -45,5 +45,5 @@ unix {
 
 INCLUDEPATH += ./ffmpeg
 win32:INCLUDEPATH += c:/mingw64_4.5.2_multilib/MSYS/local/x86_64-w64-mingw32/include
-win32:CONFIG( debug, debug|release ):LIBS += -Lc:/mingw64_4.5.2_multilib/MSYS/local/x86_64-w64-mingw32/lib
+win32:LIBS += -Lc:/mingw64_4.5.2_multilib/MSYS/local/x86_64-w64-mingw32/lib
 

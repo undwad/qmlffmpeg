@@ -146,6 +146,8 @@ public slots:
             }
     }
 
+
+
     void stopping()
     {
         _timer.stop();
