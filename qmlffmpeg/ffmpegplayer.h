@@ -16,6 +16,8 @@
 #include <QAbstractVideoSurface>
 #include <QVideoSurfaceFormat>
 #include <QVideoFrame>
+#include <QAudioFormat>
+#include <QAudioOutput>
 
 #include <climits>
 #include <iostream>
@@ -60,11 +62,39 @@ public:
     virtual void* createSound(AVSampleFormat sampleFormat, int channelCount, int sampleCount, int bitRate, int sampleRate, int& align)
     {
         _sound.resize(av_samples_get_buffer_size(nullptr, channelCount, sampleCount, sampleFormat, align));
+        QAudioFormat format;
+        format.setChannelCount(channelCount);
+        format.setCodec("audio/pcm");
+        format.setSampleRate(sampleRate);
+        format.setSampleSize(bitRate);
+        switch(sampleFormat)
+        {
+        case AV_SAMPLE_FMT_U8:
+        case AV_SAMPLE_FMT_U8P: format.setSampleType(QAudioFormat::UnSignedInt); break;
+        case AV_SAMPLE_FMT_S16:
+        case AV_SAMPLE_FMT_S32:
+        case AV_SAMPLE_FMT_S16P:
+        case AV_SAMPLE_FMT_S32P: format.setSampleType(QAudioFormat::SignedInt); break;
+        case AV_SAMPLE_FMT_FLT:
+        case AV_SAMPLE_FMT_DBL:
+        case AV_SAMPLE_FMT_FLTP:
+        case AV_SAMPLE_FMT_DBLP: format.setSampleType(QAudioFormat::Float); break;
+        default: format.setSampleType(QAudioFormat::Unknown);
+        }
+        _audioOutput = new QAudioOutput(format);
+        _audioInput = _audioOutput->start();
+        tryEmitAudioOutputError();
         return _sound.data();
     }
 
     virtual void lockSound() { }
     virtual void unlockSound() { }
+
+    virtual void free()
+    {
+        ffmpeg::Channel::free();
+        if(_audioOutput) delete _audioOutput;
+    }
 
 public slots:
     void playing(const QString& source)
@@ -73,6 +103,17 @@ public slots:
         reset(source.toStdString().c_str());
         int ptimestamp = 0;
         while(_playing && receive())
+        {
+            if(hasAudio())
+            {
+                int timestamp = popAudioSample();
+                if (timestamp >= 0)
+                {
+                    _audioInput->write(_sound.data(), _sound.size());
+                        //audioTimeStamp = timestamp;
+                        //result = sound;
+                }
+            }
             if(hasVideo())
             {
                 int timestamp = popVideoFrame();
@@ -90,6 +131,7 @@ public slots:
                     ptimestamp = timestamp;
                 }
             }
+        }
         emit stopVideoSurface();
     }
 
@@ -99,11 +141,20 @@ signals:
     void startVideoSurface(const QVideoSurfaceFormat& format);
     void presentVideoSurface(const QVideoFrame& frame);
     void stopVideoSurface();
+    void audioOutputError(QAudio::Error error);
 
 private:
     QByteArray _image;
     QByteArray _sound;
     bool _playing = false;
+    QAudioOutput* _audioOutput = nullptr;
+    QIODevice* _audioInput = nullptr;
+
+    void tryEmitAudioOutputError()
+    {
+        if(_audioOutput && QAudio::NoError != _audioOutput->error())
+            emit audioOutputError(_audioOutput->error());
+    }
 };
 
 class FFMPEGPlayer : public QObject
@@ -135,7 +186,7 @@ public:
         });
         connect(_worker, &FFMPEGWorker::presentVideoSurface, this, [this](const QVideoFrame& frame)
         {
-            qDebug() << frame.size() << frame.startTime() << frame.endTime();
+            //qDebug() << frame.size() << frame.startTime() << frame.endTime();
             if(!_videoSurface->present(frame))
                 emitVideoSurfaceError();
         });
@@ -143,6 +194,7 @@ public:
         {
             _videoSurface->stop();
         });
+        connect(_worker, &FFMPEGWorker::audioOutputError, this, &FFMPEGPlayer::audioOutputError);
         _thread.start();
     }
 
@@ -159,6 +211,16 @@ public slots:
     void stop() { emit stopping(); }
 
 private slots:
+    void audioOutputError(QAudio::Error error)
+    {
+        switch (error)
+        {
+        case QAudio::OpenError: emit this->error("error occurred opening the audio device"); break;
+        case QAudio::IOError: emit this->error("error occurred during read/write of audio device"); break;
+        case QAudio::UnderrunError: emit this->error("audio data is not being fed to the audio device at a fast enough rate"); break;
+        case QAudio::FatalError: emit this->error("non-recoverable error has occurred, the audio device is not usable at this time"); break;
+        }
+    }
 
 private:
     QString _source;
