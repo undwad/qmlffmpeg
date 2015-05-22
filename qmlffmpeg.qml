@@ -15,9 +15,11 @@ ApplicationWindow
     FFMPEGPlayer
     {
         id: _ffmpeg
-        //source: "f:/umayc/misc/testff/output/TAN BIONICA - Ella.mp4"
-        source: "f:/!!!/Свадьба в малиновке. Чует мое сердце, что мы накануне грандиозного шухера.mp4"
+        source: "f:/umayc/misc/testff/output/TAN BIONICA - Ella.mp4"
+        //source: "f:/!!!/Свадьба в малиновке. Чует мое сердце, что мы накануне грандиозного шухера.mp4"
         //source: "f:/!!!/Шаолинь.avi"
+        //source: "rtsp://8.15.251.47:1935/rtplive/FairfaxCCTV233"
+        onPlayingChanged: print('PLAYING', playing)
     }
 
     VideoOutput

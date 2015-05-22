@@ -130,7 +130,7 @@ struct Client : Object
 
 	virtual void onVideoStream(AVStream* stream) = 0;
 	virtual void onAudioStream(AVStream* stream) = 0;
-	virtual bool interrupt() = 0;
+    virtual bool interrupt() { return false; }
 
 	virtual bool hasVideo() { return videoStreamIndex >= 0; }
 	virtual bool hasAudio() { return audioStreamIndex >= 0; }
@@ -169,7 +169,7 @@ struct Client : Object
 		ok = false;
 	}
 
-	static int interrupt_cb(void *p) { return reinterpret_cast<ffmpeg::Client*>(p)->interrupt() ? 1 : 0; }
+    static int interrupt_cb(void *p) { return reinterpret_cast<ffmpeg::Client*>(p)->interrupt() ? 1 : 0; }
 };
 
 } //namespace ffmpeg

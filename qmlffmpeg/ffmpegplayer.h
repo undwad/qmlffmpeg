@@ -102,7 +102,7 @@ public:
     }
 
 public slots:
-    void playing(const QString& source)
+    void toPlay(const QString& source)
     {
         reset(source.toStdString().c_str());
         _videoTimeStamp = _audioTimeStamp = 0;
@@ -148,7 +148,7 @@ public slots:
 
 
 
-    void stopping()
+    void toStop()
     {
         _timer.stop();
         emit stopVideoSurface();
@@ -178,12 +178,14 @@ public:
 
     Q_PROPERTY(QString source MEMBER _source)
     Q_PROPERTY(QAbstractVideoSurface* videoSurface MEMBER _videoSurface)
+    Q_PROPERTY(bool playing READ playing WRITE setPlaying NOTIFY playingChanged)
 
     Q_DISABLE_COPY(FFMPEGPlayer)
 
 signals:
-    void playing(const QString& source);
-    void stopping();
+    void toPlay(const QString& source);
+    void toStop();
+    void playingChanged(bool);
     void error(const QString& error);
 
 public:
@@ -191,23 +193,35 @@ public:
     {
         _worker->moveToThread(&_thread);
         connect(&_thread, &QThread::finished, _worker, &QObject::deleteLater);
-        connect(this, &FFMPEGPlayer::playing, _worker, &FFMPEGWorker::playing);
-        connect(this, &FFMPEGPlayer::stopping, _worker, &FFMPEGWorker::stopping);
+        connect(this, &FFMPEGPlayer::toPlay, _worker, &FFMPEGWorker::toPlay);
+        connect(this, &FFMPEGPlayer::toStop, _worker, &FFMPEGWorker::toStop);
         connect(_worker, &FFMPEGWorker::startVideoSurface, this, [this](const QVideoSurfaceFormat& format)
         {
+            setPlaying(false);
             if(!_videoSurface->start(format))
                 emitVideoSurfaceError();
         });
         connect(_worker, &FFMPEGWorker::presentVideoSurface, this, [this](const QVideoFrame& frame)
         {
-            if(!_videoSurface->present(frame))
-                emitVideoSurfaceError();
+            if(_videoSurface->present(frame)) setPlaying(true);
+            else emitVideoSurfaceError();
         });
         connect(_worker, &FFMPEGWorker::stopVideoSurface, this, [this]()
         {
+            setPlaying(false);
             _videoSurface->stop();
         });
         _thread.start();
+    }
+
+    bool playing() const { return _playing; }
+    void setPlaying(bool playing)
+    {
+        if(playing != _playing)
+        {
+            _playing = playing;
+            emit playingChanged(playing);
+        }
     }
 
     ~FFMPEGPlayer()
@@ -218,9 +232,9 @@ public:
     }
 
 public slots:
-    void play() { emit playing(_source); }
+    void play() { emit toPlay(_source); }
 
-    void stop() { emit stopping(); }
+    void stop() { emit toStop(); }
 
 private slots:
 
@@ -229,6 +243,7 @@ private:
     QAbstractVideoSurface* _videoSurface;
     FFMPEGWorker* _worker = new FFMPEGWorker;
     QThread _thread;
+    bool _playing = false;
 
     void emitVideoSurfaceError()
     {
