@@ -176,7 +176,7 @@ class FFMPEGPlayer : public QObject
 public:
     Q_OBJECT
 
-    Q_PROPERTY(QString source MEMBER _source)
+    Q_PROPERTY(QString source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(QAbstractVideoSurface* videoSurface MEMBER _videoSurface)
     Q_PROPERTY(bool playing READ playing WRITE setPlaying NOTIFY playingChanged)
 
@@ -186,6 +186,7 @@ signals:
     void toPlay(const QString& source);
     void toStop();
     void playingChanged(bool);
+    void sourceChanged(const QString&);
     void error(const QString& error);
 
 public:
@@ -221,6 +222,16 @@ public:
         {
             _playing = playing;
             emit playingChanged(playing);
+        }
+    }
+
+    QString source() const { return _source; }
+    void setSource(const QString& source)
+    {
+        if(source != _source)
+        {
+            _source = source;
+            emit sourceChanged(source);
         }
     }
 
