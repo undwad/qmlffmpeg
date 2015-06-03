@@ -295,7 +295,6 @@ public:
 
     static QObject* provider(QQmlEngine*, QJSEngine*)
     {
-        qDebug() << "FFMPEGLogger::provider";
         av_log_set_callback(log_callback);
         return _instance = new FFMPEGLogger();
     }
