@@ -267,3 +267,86 @@ private:
         }
     }
 };
+
+class FFMPEGLogger : public QObject
+{
+    Q_OBJECT
+
+    Q_ENUMS(Level)
+
+    Q_PROPERTY (Level level READ level WRITE setLevel)
+    Q_PROPERTY (bool defaultBehaviour MEMBER _defaultBehaviour)
+
+    Q_DISABLE_COPY(FFMPEGLogger)
+
+public:
+    static FFMPEGLogger* _instance;
+
+    enum Level
+    {
+        Panic = AV_LOG_PANIC,
+        Fatal = AV_LOG_FATAL,
+        Error = AV_LOG_ERROR,
+        Warning = AV_LOG_WARNING,
+        Info = AV_LOG_INFO,
+        Verbose = AV_LOG_VERBOSE,
+        Debug = AV_LOG_DEBUG,
+    };
+
+    static QObject* provider(QQmlEngine*, QJSEngine*)
+    {
+        qDebug() << "FFMPEGLogger::provider";
+        av_log_set_callback(log_callback);
+        return _instance = new FFMPEGLogger();
+    }
+
+    FFMPEGLogger() { }
+
+    Level level() const { return (Level)av_log_get_level(); }
+    void setLevel(Level level) { av_log_set_level(level); }
+
+    static void log_callback(void* avcl, int level, const char* format, va_list args)
+    {
+        if(level <= av_log_get_level())
+        {
+            if(_instance->_defaultBehaviour) av_log_default_callback(avcl, level, format, args);
+            static int size = 256;
+            string msg;
+            msg.resize(size);
+            int s = vsnprintf((char*)msg.c_str(), size, format, args);
+            if(s >= 0)
+            {
+                if(s > size)
+                {
+                    size = s;
+                    msg.resize(size);
+                    s = vsnprintf((char*)msg.c_str(), size, format, args);
+                }
+                if('\n' == msg[s - 1])
+                    msg[s - 1] = 0;
+            }
+
+            string classname;
+            string url;
+            if(avcl)
+            {
+                AVClass* avc = *(AVClass**)avcl;
+                classname = (const char*)avc->class_name;
+                if(0 == strcmp(avc->class_name, "AVFormatContext"))
+                    url = (const char*)((AVFormatContext*)avcl)->filename;
+                else if (0 == strcmp(avc->class_name, "URLContext"))
+                    url = (const char*)((URLContext*)avcl)->filename;
+            }
+
+            emit _instance->log((Level)level, QString(msg.c_str()), QString(classname.c_str()), QString(url.c_str()));
+        }
+    }
+
+signals:
+    void log(Level level, const QString& message, const QString& classname, const QString& url);
+
+private:
+    bool _defaultBehaviour = true;
+};
+
+Q_DECLARE_METATYPE(FFMPEGLogger::Level)

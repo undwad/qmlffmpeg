@@ -11,8 +11,8 @@ extern "C"
 #	include <libavcodec/avcodec.h>
 #	include <libswscale/swscale.h>
 #	include <libavformat/avformat.h>
+#	include <libavformat/url.h>
 #	include <libswresample/swresample.h>
-//#	include <libavformat/url.h>
 #	include <libavutil/imgutils.h>
 #	include <libavutil/log.h>
 #	include <libavutil/channel_layout.h>

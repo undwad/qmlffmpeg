@@ -15,10 +15,11 @@ ApplicationWindow
     FFMPEGPlayer
     {
         id: _ffmpeg
-        source: "f:/umayc/misc/testff/output/TAN BIONICA - Ella.mp4"
+        //source: "f:/umayc/misc/testff/output/TAN BIONICA - Ella.mp4"
         //source: "f:/!!!/Свадьба в малиновке. Чует мое сердце, что мы накануне грандиозного шухера.mp4"
         //source: "f:/!!!/Шаолинь.avi"
         //source: "rtsp://8.15.251.47:1935/rtplive/FairfaxCCTV233"
+        source: "rtsp://хуй:1935/rtplive/FairfaxCCTV233"
         onPlayingChanged: print('PLAYING', playing)
     }
 
@@ -43,5 +44,14 @@ ApplicationWindow
         }
     }
 
-    Component.onCompleted: _ffmpeg.play()
+    Component.onCompleted:
+    {
+        _ffmpeg.play()
+
+        FFMPEGLogger.level = FFMPEGLogger.Error
+        FFMPEGLogger.log.connect(pprint)
+    }
+
+    function pprint() { print(Array.prototype.slice.call(arguments).map(JSON.stringify)) }
+
 }
