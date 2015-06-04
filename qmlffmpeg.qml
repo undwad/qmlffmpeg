@@ -12,11 +12,25 @@ ApplicationWindow
     height: 500
     visible: true
 
+    FFMPEGPlayer
+    {
+        id: _ffmpeg
+        volume: _volume.value
+        source: _urls.currentText
+        onPlayingChanged: print('PLAYING', playing)
+        onVolumeChanged: print('volume', volume)
+    }
+
+    VideoOutput
+    {
+        source: _ffmpeg
+        anchors.fill: parent
+    }
+
     ComboBox
     {
         id: _urls
         anchors.left: parent.left
-        anchors.right: parent.tight
         anchors.top: parent.top
         model:
         [
@@ -30,21 +44,22 @@ ApplicationWindow
 
     }
 
-    FFMPEGPlayer
+    Slider
     {
-        id: _ffmpeg
-        source: _urls.currentText
-        onPlayingChanged: print('PLAYING', playing)
-    }
-
-    VideoOutput
-    {
-        source: _ffmpeg
-        anchors.fill: parent
+        id: _volume
+        anchors.left: _urls.right
+        anchors.right: _buttons.left
+        anchors.top: parent.top
+        enabled: _ffmpeg.volume >= 0
+        minimumValue: 0
+        stepSize: 0.1
+        maximumValue: 1
+        value: 1
     }
 
     Column
     {
+        id: _buttons
         anchors.right: parent.right
         Button
         {

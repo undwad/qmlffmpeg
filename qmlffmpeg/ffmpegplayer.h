@@ -109,6 +109,8 @@ public slots:
         _timer.start();
     }
 
+    void toSetVolume(qreal volume) { if(_audioOutput) _audioOutput->setVolume(volume); }
+
     void receiving()
     {
         receive();
@@ -146,6 +148,13 @@ public slots:
                 }
                 else break;
             }
+
+        qreal volume = hasAudio() ? _audioOutput->volume() : -1;
+        if(volume != _volume)
+        {
+            _volume = volume;
+            emit volumeChanged(volume);
+        }
     }
 
     void toStop()
@@ -158,6 +167,7 @@ signals:
     void startVideoSurface(const QVideoSurfaceFormat& format);
     void presentVideoSurface(const QVideoFrame& frame);
     void stopVideoSurface();
+    void volumeChanged(qreal);
 
 private:
     QByteArray _image;
@@ -169,6 +179,7 @@ private:
     qint64 _audioTimeStamp = 0;
     qint64 _videoTimeStamp = 0;
     qint64 _audioInterval = 0;
+    qreal _volume = 0;
 };
 
 class FFMPEGPlayer : public QObject
@@ -179,13 +190,16 @@ public:
     Q_PROPERTY(QString source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(QAbstractVideoSurface* videoSurface MEMBER _videoSurface)
     Q_PROPERTY(bool playing READ playing WRITE setPlaying NOTIFY playingChanged)
+    Q_PROPERTY(qreal volume READ volume WRITE setVolume NOTIFY volumeChanged)
 
     Q_DISABLE_COPY(FFMPEGPlayer)
 
 signals:
     void toPlay(const QString& source);
     void toStop();
+    void toSetVolume(qreal volume);
     void playingChanged(bool);
+    void volumeChanged(qreal);
     void sourceChanged(const QString&);
     void error(const QString& error);
 
@@ -196,6 +210,15 @@ public:
         connect(&_thread, &QThread::finished, _worker, &QObject::deleteLater);
         connect(this, &FFMPEGPlayer::toPlay, _worker, &FFMPEGWorker::toPlay);
         connect(this, &FFMPEGPlayer::toStop, _worker, &FFMPEGWorker::toStop);
+        connect(this, &FFMPEGPlayer::toSetVolume, _worker, &FFMPEGWorker::toSetVolume);
+        connect(_worker, &FFMPEGWorker::volumeChanged, this, [this](qreal volume)
+        {
+            if(_volume != volume)
+            {
+                _volume = volume;
+                emit volumeChanged(volume);
+            }
+        });
         connect(_worker, &FFMPEGWorker::startVideoSurface, this, [this](const QVideoSurfaceFormat& format)
         {
             setPlaying(false);
@@ -224,6 +247,9 @@ public:
             emit playingChanged(playing);
         }
     }
+
+    qreal volume() const { return _volume; }
+    void setVolume(qreal volume) { if(volume != _volume && _volume >= 0) emit toSetVolume(volume); }
 
     QString source() const { return _source; }
     void setSource(const QString& source)
@@ -255,6 +281,7 @@ private:
     FFMPEGWorker* _worker = new FFMPEGWorker;
     QThread _thread;
     bool _playing = false;
+    qreal _volume = 0;
 
     void emitVideoSurfaceError()
     {
