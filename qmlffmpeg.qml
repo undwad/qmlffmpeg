@@ -12,14 +12,28 @@ ApplicationWindow
     height: 500
     visible: true
 
+    ComboBox
+    {
+        id: _urls
+        anchors.left: parent.left
+        anchors.right: parent.tight
+        anchors.top: parent.top
+        model:
+        [
+            "http://q:__root__@192.168.10.211/axis-cgi/mjpg/video.cgi?camera=1&showlength=1",
+            "f:/!!!/Шаолинь.avi",
+            "f:/umayc/misc/testff/output/TAN BIONICA - Ella.mp4",
+            "f:/!!!/Свадьба в малиновке. Чует мое сердце, что мы накануне грандиозного шухера.mp4",
+            "rtsp://8.15.251.47:1935/rtplive/FairfaxCCTV233",
+            "rtsp://хуй:1935/rtplive/FairfaxCCTV233"
+        ]
+
+    }
+
     FFMPEGPlayer
     {
         id: _ffmpeg
-        //source: "f:/umayc/misc/testff/output/TAN BIONICA - Ella.mp4"
-        //source: "f:/!!!/Свадьба в малиновке. Чует мое сердце, что мы накануне грандиозного шухера.mp4"
-        //source: "f:/!!!/Шаолинь.avi"
-        //source: "rtsp://8.15.251.47:1935/rtplive/FairfaxCCTV233"
-        source: "rtsp://хуй:1935/rtplive/FairfaxCCTV233"
+        source: _urls.currentText
         onPlayingChanged: print('PLAYING', playing)
     }
 
@@ -46,8 +60,6 @@ ApplicationWindow
 
     Component.onCompleted:
     {
-        _ffmpeg.play()
-
         FFMPEGLogger.level = FFMPEGLogger.Error
         FFMPEGLogger.log.connect(pprint)
     }

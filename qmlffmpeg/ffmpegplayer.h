@@ -44,7 +44,7 @@ class FFMPEGWorker : public QObject, ffmpeg::Channel
     Q_OBJECT
 
 public:
-    FFMPEGWorker() : ffmpeg::Channel(AVPixelFormat::AV_PIX_FMT_BGRA, AV_SAMPLE_FMT_S16), _timer(this)
+    FFMPEGWorker() : ffmpeg::Channel(AVPixelFormat::AV_PIX_FMT_RGBA, AV_SAMPLE_FMT_S16), _timer(this)
     {
         _timer.setInterval(1);
         _timer.setSingleShot(false);
@@ -56,7 +56,7 @@ public:
     virtual void* createImage(int width, int height, int& align)
     {
         QVideoSurfaceFormat format(QSize(width, height), QVideoFrame::Format_BGR32);
-        format.setFrameRate(videoCodec->time_base.num / videoCodec->time_base.den);
+        format.setFrameRate((qreal)(videoCodec->time_base.den / videoCodec->time_base.num));
         emit startVideoSurface(format);
         _image.resize(width * height * av_get_bits_per_pixel(av_pix_fmt_desc_get(pixelFormat)) / 8);
         return _image.data();
@@ -106,7 +106,6 @@ public slots:
     {
         reset(source.toStdString().c_str());
         _videoTimeStamp = _audioTimeStamp = 0;
-        _audioInterval = 23;
         _timer.start();
     }
 
@@ -114,7 +113,10 @@ public slots:
     {
         receive();
 
-        if(!_audioTimeStamp) _elapsed.restart();
+        if(0 == _audioInterval && hasVideo()) _audioInterval = 1000 * videoCodec->time_base.num / videoCodec->time_base.den;
+
+        if(0 == _audioTimeStamp) _elapsed.restart();
+
         if(_elapsed.elapsed() >= _audioTimeStamp)
             if(hasAudio())
             {
@@ -145,8 +147,6 @@ public slots:
                 else break;
             }
     }
-
-
 
     void toStop()
     {
