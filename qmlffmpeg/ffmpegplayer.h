@@ -249,7 +249,7 @@ public:
     }
 
     qreal volume() const { return _volume; }
-    void setVolume(qreal volume) { if(volume != _volume && _volume >= 0) emit toSetVolume(volume); }
+    void setVolume(qreal volume) { emit toSetVolume(volume); }
 
     QString source() const { return _source; }
     void setSource(const QString& source)
