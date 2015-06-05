@@ -14,6 +14,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<FFMPEGPlayer>("qmlffmpeg", 1, 0, "FFMPEGPlayer");
     qmlRegisterSingletonType<FFMPEGLogger>("qmlffmpeg", 1, 0, "FFMPEGLogger", FFMPEGLogger::provider);
     qRegisterMetaType<FFMPEGLogger::Level>("Level");
+    qRegisterMetaType<FFMPEGParams>("FFMPEGParams");
     engine.load(QUrl(QStringLiteral("qrc:/qmlffmpeg.qml")));
 
     return app.exec();

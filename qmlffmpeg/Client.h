@@ -15,7 +15,7 @@ struct Client : Object
 	Client() : dict(nullptr), formatContext(nullptr), videoStreamIndex(-1), audioStreamIndex(-1), maxAnalyzeDuration(2) {}
 	virtual ~Client() { free(); }
 
-	virtual bool reset(const char* url)
+    virtual bool reset(const char* url, const map<string, string>& params)
 	{
 		free();
 		if(formatContext = avformat_alloc_context())
@@ -25,7 +25,9 @@ struct Client : Object
 
 			formatContext->max_analyze_duration = maxAnalyzeDuration * AV_TIME_BASE;
 
-			av_dict_set(&dict, "rtsp_transport", "tcp", 0);
+            for(auto& param : params)
+                av_dict_set(&dict, param.first.c_str(), param.second.c_str(), 0);
+
 			if(0 == avformat_open_input(&formatContext, url, nullptr, &dict))
 				if(0 <= avformat_find_stream_info(formatContext, nullptr))
 				{

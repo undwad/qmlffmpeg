@@ -14,6 +14,8 @@
 #include <QElapsedTimer>
 #include <QTimer>
 #include <QByteArray>
+#include <QJSValue>
+#include <QJSValueIterator>
 #include <QDebug>
 #include <QAbstractVideoSurface>
 #include <QVideoSurfaceFormat>
@@ -29,6 +31,7 @@
 #include <ctime>
 #include <chrono>
 #include <queue>
+#include <map>
 
 using namespace std;
 using namespace std::chrono;
@@ -38,6 +41,10 @@ using namespace std::chrono;
 using namespace std;
 
 #include "Channel.h"
+
+typedef map<string, string> FFMPEGParams;
+
+Q_DECLARE_METATYPE(FFMPEGParams)
 
 class FFMPEGWorker : public QObject, ffmpeg::Channel
 {
@@ -102,9 +109,9 @@ public:
     }
 
 public slots:
-    void toPlay(const QString& source)
+    void toPlay(const QString& source, const FFMPEGParams& params)
     {
-        reset(source.toStdString().c_str());
+        reset(source.toStdString().c_str(), params);
         _videoTimeStamp = _audioTimeStamp = 0;
         _timer.start();
     }
@@ -191,15 +198,17 @@ public:
     Q_PROPERTY(QAbstractVideoSurface* videoSurface MEMBER _videoSurface)
     Q_PROPERTY(bool playing READ playing WRITE setPlaying NOTIFY playingChanged)
     Q_PROPERTY(qreal volume READ volume WRITE setVolume NOTIFY volumeChanged)
+    Q_PROPERTY(QJSValue params READ params WRITE setParams NOTIFY paramsChanged)
 
     Q_DISABLE_COPY(FFMPEGPlayer)
 
 signals:
-    void toPlay(const QString& source);
+    void toPlay(const QString& source, const FFMPEGParams& params);
     void toStop();
     void toSetVolume(qreal volume);
     void playingChanged(bool);
     void volumeChanged(qreal);
+    void paramsChanged(const QJSValue&);
     void sourceChanged(const QString&);
     void error(const QString& error);
 
@@ -251,6 +260,21 @@ public:
     qreal volume() const { return _volume; }
     void setVolume(qreal volume) { emit toSetVolume(volume); }
 
+    QJSValue params() const { return _params; }
+
+    void setParams(const QJSValue& params)
+    {
+        _params = params;
+        __params.clear();
+        QJSValueIterator it(params);
+        while (it.hasNext()) 
+        {
+            it.next();
+            __params.insert(pair<string, string>(it.name().toStdString(), it.value().toString().toStdString()));
+        }
+        emit paramsChanged(params);
+    }
+
     QString source() const { return _source; }
     void setSource(const QString& source)
     {
@@ -269,7 +293,7 @@ public:
     }
 
 public slots:
-    void play() { emit toPlay(_source); }
+    void play() { emit toPlay(_source, __params); }
 
     void stop() { emit toStop(); }
 
@@ -282,6 +306,8 @@ private:
     QThread _thread;
     bool _playing = false;
     qreal _volume = 0;
+    QJSValue _params;
+    FFMPEGParams __params;
 
     void emitVideoSurfaceError()
     {

@@ -19,6 +19,7 @@ ApplicationWindow
         source: _urls.currentText
         onPlayingChanged: print('PLAYING', playing)
         onVolumeChanged: print('volume', volume)
+        onParamsChanged: pprint('PARAMS', params)
     }
 
     VideoOutput
@@ -35,19 +36,28 @@ ApplicationWindow
         model:
         [
             "http://q:__root__@192.168.10.211/axis-cgi/mjpg/video.cgi?camera=1&showlength=1",
+            "rtsp://q:__root__@192.168.10.211/axis-media/media.amp/audio=0&camera=1",
             "f:/!!!/Шаолинь.avi",
             "f:/umayc/misc/testff/output/TAN BIONICA - Ella.mp4",
             "f:/!!!/Свадьба в малиновке. Чует мое сердце, что мы накануне грандиозного шухера.mp4",
             "rtsp://8.15.251.47:1935/rtplive/FairfaxCCTV233",
             "rtsp://хуй:1935/rtplive/FairfaxCCTV233"
         ]
+    }
 
+    ComboBox
+    {
+        id: _transport
+        anchors.left: _urls.right
+        anchors.top: parent.top
+        model: [ 'tcp', 'http', 'udp' ]
+        onCurrentTextChanged: _ffmpeg.params = { 'rtsp_transport': currentText }
     }
 
     Slider
     {
         id: _volume
-        anchors.left: _urls.right
+        anchors.left: _transport.right
         anchors.right: _buttons.left
         anchors.top: parent.top
         enabled: _ffmpeg.volume >= 0
