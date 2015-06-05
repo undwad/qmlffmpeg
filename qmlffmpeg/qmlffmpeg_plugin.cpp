@@ -11,6 +11,7 @@ void QmlwebsocketsPlugin::registerTypes(const char *uri)
     qmlRegisterType<FFMPEGPlayer>(uri, 1, 0, "FFMPEGPlayer");
     qmlRegisterSingletonType<FFMPEGLogger>(uri, 1, 0, "FFMPEGLogger", FFMPEGLogger::provider);
     qRegisterMetaType<FFMPEGLogger::Level>("Level");
+    qRegisterMetaType<FFMPEGParams>("FFMPEGParams");
 }
 
 
