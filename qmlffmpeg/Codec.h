@@ -26,8 +26,8 @@ struct Codec : Object
 			if(context = avcodec_alloc_context3(codec))
 			{
 				context->codec_id = codec->id;
-				context->codec_type = codec->type;
-			}
+                context->codec_type = codec->type;
+            }
 		return nullptr != context;
 	}
 

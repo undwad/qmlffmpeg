@@ -9,10 +9,10 @@ struct Client : Object
 {
 	AVDictionary* dict;
 	AVFormatContext* formatContext;
-	int videoStreamIndex, audioStreamIndex, maxAnalyzeDuration;
+    int videoStreamIndex, audioStreamIndex;
 	queue<AVPacket> videoQueue, audioQueue;
 
-	Client() : dict(nullptr), formatContext(nullptr), videoStreamIndex(-1), audioStreamIndex(-1), maxAnalyzeDuration(2) {}
+    Client() : dict(nullptr), formatContext(nullptr), videoStreamIndex(-1), audioStreamIndex(-1) {}
 	virtual ~Client() { free(); }
 
     virtual bool reset(const char* url, const map<string, string>& params)
@@ -23,13 +23,11 @@ struct Client : Object
 			static const AVIOInterruptCB int_cb = {interrupt_cb, this};
 			formatContext->interrupt_callback = int_cb;
 
-			formatContext->max_analyze_duration = maxAnalyzeDuration * AV_TIME_BASE;
-
             for(auto& param : params)
                 av_dict_set(&dict, param.first.c_str(), param.second.c_str(), 0);
 
 			if(0 == avformat_open_input(&formatContext, url, nullptr, &dict))
-				if(0 <= avformat_find_stream_info(formatContext, nullptr))
+                if(0 <= avformat_find_stream_info(formatContext, &dict))
 				{
 					for(unsigned int i = 0; i < formatContext->nb_streams; i++)
 					{
@@ -63,7 +61,7 @@ struct Client : Object
 		if(ok)
 		{
 			AVPacket packet;
-			if(ok = !av_read_frame(formatContext, &packet))
+            if(ok = !av_read_frame(formatContext, &packet))
 			{
 				if (packet.stream_index == videoStreamIndex)
 				{

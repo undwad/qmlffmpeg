@@ -397,6 +397,22 @@ public:
 signals:
     void log(Level level, const QString& message, const QString& classname, const QString& url);
 
+public slots:
+    QString levelToString(Level level)
+    {
+        switch(level)
+        {
+        case Panic: return "PANIC";
+        case Fatal: return "FATAL";
+        case Error: return "ERROR";
+        case Warning: return "WARNING";
+        case Info: return "INFO";
+        case Verbose: return "VERBOSE";
+        case Debug: return "DEBUG";
+        default: return "UNKNOWN";
+        }
+    }
+
 private:
     bool _defaultBehaviour = true;
 };

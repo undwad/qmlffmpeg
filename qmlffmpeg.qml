@@ -17,6 +17,13 @@ ApplicationWindow
         id: _ffmpeg
         volume: _volume.value
         source: _urls.currentText
+        params:
+        ({
+             //analyzeduration: 5000,
+             //probesize: 20000,
+             //video_size: '640x480',
+             //pixel_format: 'yuv420p',
+        })
         onPlayingChanged: print('PLAYING', playing)
         onVolumeChanged: print('volume', volume)
         onParamsChanged: pprint('PARAMS', params)
@@ -35,6 +42,8 @@ ApplicationWindow
         anchors.top: parent.top
         model:
         [
+            "http://oviso.axiscam.net/axis-cgi/mjpg/video.cgi",
+            "http://oviso.axiscam.net/axis-cgi/mjpg/video.cgi?jpg",
             "http://q:__root__@192.168.10.211/axis-cgi/mjpg/video.cgi?camera=1&showlength=1",
             "rtsp://q:__root__@192.168.10.211/axis-media/media.amp/audio=0&camera=1",
             "f:/!!!/Шаолинь.avi",
@@ -50,8 +59,8 @@ ApplicationWindow
         id: _transport
         anchors.left: _urls.right
         anchors.top: parent.top
-        model: [ 'tcp', 'http', 'udp' ]
-        onCurrentTextChanged: _ffmpeg.params = { 'rtsp_transport': currentText }
+        model: [ '', 'tcp', 'http', 'udp' ]
+        onCurrentTextChanged: if(currentText) _ffmpeg.params.rtsp_transport = currentText; else delete _ffmpeg.params.rtsp_transport
     }
 
     Slider
@@ -85,8 +94,11 @@ ApplicationWindow
 
     Component.onCompleted:
     {
-        FFMPEGLogger.level = FFMPEGLogger.Error
-        FFMPEGLogger.log.connect(pprint)
+        FFMPEGLogger.level = FFMPEGLogger.Warning
+        FFMPEGLogger.log.connect(function(level, message, classname, url)
+        {
+            print(new Date(), FFMPEGLogger.levelToString(level), message, classname, url)
+        })
     }
 
     function pprint() { print(Array.prototype.slice.call(arguments).map(JSON.stringify)) }
