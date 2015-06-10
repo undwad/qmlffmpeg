@@ -27,7 +27,7 @@ struct Client : Object
                 av_dict_set(&dict, param.first.c_str(), param.second.c_str(), 0);
 
 			if(0 == avformat_open_input(&formatContext, url, nullptr, &dict))
-                if(0 <= avformat_find_stream_info(formatContext, dict ? &dict : nullptr))
+                if(0 <= avformat_find_stream_info(formatContext, nullptr))
 				{
 					for(unsigned int i = 0; i < formatContext->nb_streams; i++)
 					{
