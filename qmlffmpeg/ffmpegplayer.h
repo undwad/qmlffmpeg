@@ -236,6 +236,7 @@ public:
         });
         connect(_worker, &FFMPEGWorker::presentVideoSurface, this, [this](const QVideoFrame& frame)
         {
+            _frame = frame;
             if(_videoSurface->present(frame)) setPlaying(true);
             else emitVideoSurfaceError();
         });
@@ -297,6 +298,24 @@ public slots:
 
     void stop() { emit toStop(); }
 
+    bool save(const QString& path, int width = 0)
+    {
+        if(_frame.map(QAbstractVideoBuffer::ReadOnly))
+        {
+            QImage image
+            (
+                _frame.bits(),
+                _frame.width(),
+                _frame.height(),
+                _frame.bytesPerLine(),
+                QImage::Format_RGBA8888
+            );
+            const_cast<QVideoFrame&>(_frame).unmap();
+            return image.scaledToWidth(width ? width : _frame.width(), Qt::SmoothTransformation).save(path);
+        }
+        return false;
+    }
+
 private slots:
 
 private:
@@ -308,6 +327,7 @@ private:
     qreal _volume = 0;
     QJSValue _params;
     FFMPEGParams __params;
+    QVideoFrame _frame;
 
     void emitVideoSurfaceError()
     {
