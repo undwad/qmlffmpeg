@@ -42,6 +42,8 @@ ApplicationWindow
         anchors.top: parent.top
         model:
         [
+            "rtsp://bezreg:123456@85.237.42.235:5555/PSIA/streaming/channels/202",
+            "http://80.153.71.35/cgi-bin/faststream.jpg?stream=full&fps=0",
             "http://oviso.axiscam.net/axis-cgi/mjpg/video.cgi",
             "http://oviso.axiscam.net/axis-cgi/mjpg/video.cgi?jpg",
             "http://q:__root__@192.168.10.211/axis-cgi/mjpg/video.cgi?camera=1&showlength=1",

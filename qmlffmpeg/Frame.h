@@ -3,6 +3,8 @@
 
 #include "Object.h"
 
+#pragma warning(disable:4996)
+
 namespace ffmpeg {
 
 struct Frame : Object
@@ -36,7 +38,7 @@ struct Frame : Object
 	bool reset()
 	{
 		free();
-		if(frame = avcodec_alloc_frame())
+        if(frame = av_frame_alloc())
 			ok = true;
 		return ok;
 	}
@@ -52,7 +54,7 @@ struct Frame : Object
 		if(!buffer)
 			this->buffer = buffer = av_malloc(size);
 		if(buffer)
-			if(frame = avcodec_alloc_frame())
+            if(frame = av_frame_alloc())
 				ok = av_image_fill_arrays(frame->data, frame->linesize, (uint8_t*)buffer, pixelFormat, width, height, align) >= 0;
 		return ok;
 	}
@@ -68,7 +70,7 @@ struct Frame : Object
 		if(!buffer)
 			this->buffer = buffer = av_malloc(size);
 		if(buffer)
-			if(frame = avcodec_alloc_frame())
+            if(frame = av_frame_alloc())
 			{
 				frame->format = sampleFormat;
 				frame->nb_samples = sampleCount;
@@ -92,7 +94,7 @@ struct Frame : Object
 
 	void free()
 	{
-		if(frame) avcodec_free_frame(&frame);
+        if(frame) av_frame_free(&frame);
 		if(buffer) av_free(buffer);
 		frame = nullptr;
 		buffer = nullptr;
